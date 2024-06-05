@@ -398,7 +398,7 @@ void setup()
   // bool SPIFFSFS::begin(bool formatOnFail, const char * basePath, uint8_t maxOpenFiles, const char * partitionLabel)
   if (!SPIFFS.begin(false, "/data", 5, "spiffs"))
   {
-    Serial.println("SPIFFS Mount Failed");
+    Serial.println("SPIFFS Mount Failed !"); // git places yellow arrow to indicate modified line
     return;
   }
 
@@ -434,6 +434,7 @@ void setup()
   -- -ledcWrite(led_channels[LED_selected], map(LED_intensity, 0, 100, 0, 255));
   */
   server = start_webserver();
+  server = start_webserver1();
 }
 
 void loop()
