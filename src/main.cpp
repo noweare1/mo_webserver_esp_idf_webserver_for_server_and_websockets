@@ -299,12 +299,15 @@ static esp_err_t socket_handler(httpd_req_t *req)
 // function to create json document send information to the web clients
 void sendJson(const char *l_type, int l_value, httpd_req_t *request)
 {
+  char strnum[5] = "";
   char jsonString[100] = "";   // create a JSON string for sending data to the client
   StaticJsonDocument<200> doc; // create JSON container
                                // JsonObject object = doc.to<JsonObject>(); // create a JSON Object
   doc["type"] = l_type;        // write data into the JSON object -> I used "type" to identify if LED_selected or LED_intensity is sent and "value" for the actual value
-  doc["value"] = l_value;
+  itoa(l_value, strnum, 10);
+  doc["value"] = strnum;          // char *	itoa (int, char *, int);
   serializeJson(doc, jsonString); // convert JSON object to string
+  log_i("jsonString= %s", jsonString);
   size_t json_length = (size_t)strlen(jsonString);
 
   /*  Documentation

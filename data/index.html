@@ -102,6 +102,7 @@
     Socket.onopen = function (event) { onOpen(event); };
     Socket.onerror = function (event) { onError(event); };
   }
+
   function onOpen(event) {
     console.log('socket open for comms');
   }
@@ -159,7 +160,7 @@
 
     Socket.send(JSON.stringify(msg));
   }
-
+  //when getting data from server
   function processCommand(event) {
     console.log(event);
     var obj = JSON.parse(event.data);
