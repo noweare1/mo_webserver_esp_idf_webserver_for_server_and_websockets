@@ -296,7 +296,6 @@ static esp_err_t socket_handler(httpd_req_t *req)
 // function to create json document send information to the web clients
 void sendJson(String l_type, String l_value, httpd_req_t *request)
 {
-
   String jsonString = "";                   // create a JSON string for sending data to the client
   StaticJsonDocument<200> doc;              // create JSON container
   JsonObject object = doc.to<JsonObject>(); // create a JSON Object
@@ -348,16 +347,6 @@ void sendJson(String l_type, String l_value, httpd_req_t *request)
   }
 }
 
-// esp_err_t httpd_ws_send_frame(httpd_req_t *req, httpd_ws_frame_t *pkt);
-/*
-  // set type of websocket to be  HTTPD_WS_TYPE_TEXT
-  esp_err_t ret = httpd_ws_send_frame(request, &ws_pkt);
-  if (ret != ESP_OK)
-  {
-    log_e("httpd_ws_send_frame failed with %d", ret);
-  }
- */
-
 /***  START WEBSERVER    ***/
 static httpd_handle_t start_webserver(void)
 {
@@ -368,9 +357,9 @@ static httpd_handle_t start_webserver(void)
   if (httpd_start(&server, &config) == ESP_OK)
   {
     log_i("Registering URI handlers"); // Registering the ws handler
-                                       // esp_err_t httpd_register_uri_handler(httpd_handle_t handle, const httpd_uri_t *uri_handler);
+
+    // Documentation: esp_err_t httpd_register_uri_handler(httpd_handle_t handle, const httpd_uri_t *uri_handler);
     httpd_register_uri_handler(server, &ws);
-    // esp_err_t httpd_unregister_uri_handler(httpd_handle_t handle,const char *uri, httpd_method_t method);
     httpd_register_uri_handler(server, &root);
     return server;
   }
