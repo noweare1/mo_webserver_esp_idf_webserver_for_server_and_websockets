@@ -5,7 +5,7 @@
 //
 // For installation, the following libraries need to be installed:
 // jrm : Using webServer from esp-idf framework which also includes websockets
-// * ArduinoJson by Benoit Blanchon
+// * ArduinoJson Library by Benoit Blanchon
 //
 // Written by mo thunderz (last update: 19.11.2021)
 // Modified noweare1 6/5/2024
@@ -19,22 +19,22 @@
 #include <SPIFFS.h>
 #include <Esp.h>
 
-// #include <esp32-hal-log.h>  this is working even if not included
+// #include <esp32-hal-log.h>  set up in platformio.ini file
 
 static esp_err_t stop_webserver(httpd_handle_t);
 static esp_err_t socket_handler(httpd_req_t *);
 static esp_err_t root_get_handler(httpd_req_t *);
 uint8_t *readFileUsingSize(fs::FS &fs, const char *path, size_t fsize);
-void sendJson(const char *, int, httpd_req_t *);
+void sendJson(String, String, httpd_req_t *);
 
 // arduino_event_id_t event;
 // typedef void (*WiFiEventCb)(arduino_event_id_t event);  //signature for wifi event handler
 // wifi_event_id_t onEvent(wifi_event_handler, ARDUINO_EVENT_MAX);
 
 uint8_t *buf = NULL; // holds the index.html file
-char l_type[25];     // save & print key and value
+const char *l_type;  // save & print key and value
 int l_value;
-//  void webSocketEvent(byte num, WStype_t type, uint8_t *payload, size_t length);
+
 const char *ssid = "boulderhill";
 const char *password = "wideflower594";
 static httpd_handle_t server = NULL;
@@ -46,9 +46,9 @@ int LED_intensity = 50;
 // init PINs: assign any pin on ESP32
 int led_pin_0 = 4;
 int led_pin_1 = 0;
-int led_pin_2 = 2; // On some ESP32 pin 2 is an internal LED, mine did not have one
+int led_pin_2 = 2;
 
-// some standard stuff needed to do "analogwrite" on the ESP32 -> an ESP32 does not have "analogwrite" and uses ledcWrite instead
+// ESP32 does not have "analogwrite" and uses ledcWrite instead
 const int freq = 5000;
 const int led_channels[] = {0, 1, 2};
 const int resolution = 8;
@@ -133,7 +133,6 @@ size_t getFileLength(fs::FS &fs, const char *path)
 }
 
 // -------- use this function if you know number of bytes of the file  --------//
-// void readFileUsingSize(fs::FS&, const char*, size_t)':
 uint8_t *readFileUsingSize(fs::FS &fs, const char *path, size_t fsize)
 {
   uint8_t *file_buf = (uint8_t *)malloc((sizeof(uint8_t) * (fsize + 1))); // malloc buf size of file
@@ -156,7 +155,7 @@ uint8_t *readFileUsingSize(fs::FS &fs, const char *path, size_t fsize)
 
   Serial.println("Reading from file:");
 
-  /*/
+  /* DOCUMENTATION
   size_t File::read(uint8_t* buf, size_t size)
   {
     if (!*this) {
@@ -194,13 +193,12 @@ static esp_err_t root_get_handler(httpd_req_t *req)
   httpd_resp_send(req, (char *)buffer, fileLength);
   // httpd_resp_sendstr(req, buff;
   free(buffer);
-  // httpd_register_uri_handler(server, &ws); // after serving the webpage register websockets
-  // esp_err_t httpd_unregister_uri_handler(httpd_handle_t handle,const char *uri, httpd_method_t method);
-  // httpd_unregister_uri_handler(server, "/", HTTP_GET); // and unregister the root
 
-  uint32_t heapSize = ESP.getFreeHeap();
+  /*
+  uint32_t heapSize = ESP.getFreeHeap();  //check heap size for memory leak
   Serial.print("heap size : ");
   Serial.println(heapSize);
+  */
   return ESP_OK;
 }
 
@@ -211,7 +209,7 @@ static esp_err_t socket_handler(httpd_req_t *req)
   {
     log_i("Handshake done, the new connection was opened");
     return ESP_OK;
-  }
+  } // if
 
   httpd_ws_frame_t ws_pkt;
   uint8_t *buf = NULL; // uint8_t* payload is a member of httpd_ws_frame_t (ws_pkt)
@@ -225,7 +223,7 @@ static esp_err_t socket_handler(httpd_req_t *req)
   {
     log_e("httpd_ws_recv_frame failed to get frame len with %d", ret);
     return ret;
-  }
+  } // if
   log_i("frame len is %d", ws_pkt.len);
 
   if (ws_pkt.len)
@@ -236,7 +234,7 @@ static esp_err_t socket_handler(httpd_req_t *req)
     {
       log_e("Failed to calloc memory for buf");
       return ESP_ERR_NO_MEM;
-    }
+    } // if
     ws_pkt.payload = buf; // ws_pkt.payload gets assigned same address as buf
 
     ret = httpd_ws_recv_frame(req, &ws_pkt, ws_pkt.len); // this call places request data in payload
@@ -245,7 +243,7 @@ static esp_err_t socket_handler(httpd_req_t *req)
       log_e("httpd_ws_recv_frame failed with %d", ret);
       free(buf);
       return ret;
-    }
+    } // if
     log_i("Got packet with message: %s", ws_pkt.payload);
 
     StaticJsonDocument<200> doc;                                       // create JSON container
@@ -257,85 +255,80 @@ static esp_err_t socket_handler(httpd_req_t *req)
       ret = -1;
       free(buf); // free memory we allocated previously
       return ret;
-    }
+    } // if
     else
     {
-      // l_type = doc["type"]; // this is how we extract type,value from json object
-      strcpy(l_type, doc["type"]); // this is how we extract type,value from json object
+      l_type = doc["type"]; // this is how we extract type,value from json object
+                            // strcpy(l_type, doc["type"]); // this is how we extract type,value from json object
       l_value = doc["value"];
-      Serial.print("Type: ");
-      Serial.println(l_type); // l_type is const char*
-      Serial.print("Value: ");
-      Serial.println(l_value); // char *	itoa (int, char *, int);
-    }
+      Serial.println("Type: " + String(l_type));
+      Serial.println("Value " + String(l_value));
 
-    // compare l_type to known types
-    if (strcmp(l_type, "LED_intensity") == 0)
-    {
-      LED_intensity = int(l_value);
-      sendJson("LED_intensity", l_value, req);
-      ledcWrite(led_channels[LED_selected], map(LED_intensity, 0, 100, 0, 255));
-    }
-    // else if LED_select is changed -> switch on LED and switch off the rest
-    // if (String(l_type) == "LED_selected")
-    if (strcmp(l_type, "LED_selected") == 0)
-    {
-      LED_selected = int(l_value);
-      sendJson("LED_selected", l_value, req);
-      for (int i = 0; i < 3; i++)
+      // compare l_type to known types
+      if (String(l_type) == "LED_intensity")
       {
-        if (i == LED_selected)
-          ledcWrite(led_channels[i], map(LED_intensity, 0, 100, 0, 255)); // switch on LED
-        else
-          ledcWrite(led_channels[i], 0); // switch off not-selected LEDs
-      }
-    }
-  }
-  free(buf); // make sure we do not return above without freeing buf
+        LED_intensity = int(l_value);
+        sendJson("LED_intensity", String(l_value), req);
+        ledcWrite(led_channels[LED_selected], map(LED_intensity, 0, 100, 0, 255));
+      } // if
+      // else if LED_select is changed -> switch on LED and switch off the rest
+      // if (String(l_type) == "LED_selected")
+      if (String(l_type) == "LED_selected")
+      {
+        LED_selected = int(l_value);
+        sendJson("LED_selected", String(l_value), req);
+        for (int i = 0; i < 3; i++)
+        {
+          if (i == LED_selected)
+            ledcWrite(led_channels[i], map(LED_intensity, 0, 100, 0, 255)); // switch on LED
+          else
+            ledcWrite(led_channels[i], 0); // switch off not-selected LEDs
+        } // for
+      } // if
+    } // else
+    free(buf); // make sure we do not return above without freeing buf
+  } // if ws pkt len
+
   ret = ESP_OK;
   return ret;
 }
-
 // function to create json document send information to the web clients
-void sendJson(const char *l_type, int l_value, httpd_req_t *request)
+// void sendJson(const char *l_type, int l_value, httpd_req_t *request)
+void sendJson(String l_type, String l_value, httpd_req_t *request)
 {
-  char strnum[5] = "";
-  char jsonString[100] = "";   // create a JSON string for sending data to the client
-  StaticJsonDocument<200> doc; // create JSON container
-                               // JsonObject object = doc.to<JsonObject>(); // create a JSON Object
-  doc["type"] = l_type;        // write data into the JSON object -> I used "type" to identify if LED_selected or LED_intensity is sent and "value" for the actual value
-  itoa(l_value, strnum, 10);
-  doc["value"] = strnum;          // char *	itoa (int, char *, int);
-  serializeJson(doc, jsonString); // convert JSON object to string
+
+  String jsonString = "";                   // create a JSON string for sending data to the client
+  StaticJsonDocument<200> doc;              // create JSON container
+  JsonObject object = doc.to<JsonObject>(); // create a JSON Object
+  object["type"] = l_type;                  // write data into the JSON object -> I used "type" to identify if LED_selected or LED_intensity is sent and "value" for the actual value
+  object["value"] = l_value;                // char *	itoa (int, char *, int);
+  serializeJson(doc, jsonString);           // convert JSON object to string
   log_i("jsonString= %s", jsonString);
-  size_t json_length = (size_t)strlen(jsonString);
+  size_t json_length = jsonString.length();
 
   /*  Documentation
-@brief WebSocket frame format
-
-    typedef struct httpd_ws_frame
-{
-  bool final;         // Final frame:
-                      //  For received frames this field indicates whether the `FIN` flag was set.
-                      //  For frames to be transmitted, this field is only used if the `fragmented`
-                      //  option is set as well. If `fragmented` is false, the `FIN` flag is set
-                      //  by default, marking the ws_frame as a complete/unfragmented message
-                      //  (esp_http_server doesn't automatically fragment messages)
-  bool fragmented;    //  Indication that the frame allocated for transmission is a message fragment,
-                      // so the `FIN` flag is set manually according to the `final` option.
-                        // This flag is never set for received messages
-  httpd_ws_type_t type; // WebSocket frame type
-  uint8_t *payload;     //Pre-allocated data buffer
-  size_t len;           // Length of the WebSocket data
-} httpd_ws_frame_t;
-*/
-  httpd_ws_frame_t json_pkt; // create a packet to send data to client
-  // httpd_ws_type_t type
-  // uint8_t* payload is a member of httpd_ws_frame_t (ws_pkt)
-  memset(&json_pkt, 0, sizeof(httpd_ws_frame_t)); // init members of ws_pkt to 0
+ @brief WebSocket frame format
+ typedef struct httpd_ws_frame
+ {
+   bool final;         // Final frame:
+                       //  For received frames this field indicates whether the `FIN` flag was set.
+                       //  For frames to be transmitted, this field is only used if the `fragmented`
+                       //  option is set as well. If `fragmented` is false, the `FIN` flag is set
+                       //  by default, marking the ws_frame as a complete/unfragmented message
+                       //  (esp_http_server doesn't automatically fragment messages)
+   bool fragmented;    //  Indication that the frame allocated for transmission is a message fragment,
+                       // so the `FIN` flag is set manually according to the `final` option.
+                         // This flag is never set for received messages
+   httpd_ws_type_t type; // WebSocket frame type
+   uint8_t *payload;     //Pre-allocated data buffer
+   size_t len;           // Length of the WebSocket data
+ } httpd_ws_frame_t;
+ */
+  httpd_ws_frame_t json_pkt;                      // create a packet to send data to client
+  memset(&json_pkt, 0, sizeof(httpd_ws_frame_t)); // initialize members of ws_pkt to 0
 
   uint8_t *buf = NULL;
-  buf = (uint8_t *)calloc(1, json_length + 1); // buf will store data in ws_pkt.payload
+  buf = (uint8_t *)calloc(1, json_length); // buf will store data in ws_pkt.payload
   if (buf == NULL)
   {
     log_e("Failed to calloc memory for buf");
@@ -344,8 +337,8 @@ void sendJson(const char *l_type, int l_value, httpd_req_t *request)
 
   json_pkt.payload = buf; // ws_pkt.payload gets assigned same address as buf
   json_pkt.type = HTTPD_WS_TYPE_TEXT;
-  json_pkt.len = json_length + 1;
-  strcpy((char *)json_pkt.payload, jsonString);
+  json_pkt.len = json_length;
+  strcpy((char *)json_pkt.payload, jsonString.c_str());
 
   esp_err_t ret = httpd_ws_send_frame(request, &json_pkt); // send data to the client
   if (ret != ESP_OK)
@@ -353,12 +346,6 @@ void sendJson(const char *l_type, int l_value, httpd_req_t *request)
     log_e("httpd_ws_send_frame failed with %d", ret);
   }
 }
-
-/*ret = httpd_ws_send_frame(req, &ws_pkt);
-if (ret != ESP_OK){
-    log_e("httpd_ws_send_frame failed with %d", ret);
-}
-*/
 
 // esp_err_t httpd_ws_send_frame(httpd_req_t *req, httpd_ws_frame_t *pkt);
 /*
