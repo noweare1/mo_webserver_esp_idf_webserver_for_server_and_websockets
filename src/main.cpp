@@ -229,7 +229,7 @@ static esp_err_t socket_handler(httpd_req_t *req)
   if (ws_pkt.len)
   {
     /* ws_pkt.len + 1 is for NULL termination as we are expecting a string */
-    buf = (uint8_t *)calloc(1, ws_pkt.len + 1); // buf will store ws_pkt data, THIS SHOULD BE JSON STRING
+    buf = (uint8_t *)calloc(1, ws_pkt.len + 1); // buf will store ws_pkt data, +1 for null
     if (buf == NULL)
     {
       log_e("Failed to calloc memory for buf");
@@ -292,8 +292,8 @@ static esp_err_t socket_handler(httpd_req_t *req)
   ret = ESP_OK;
   return ret;
 }
+
 // function to create json document send information to the web clients
-// void sendJson(const char *l_type, int l_value, httpd_req_t *request)
 void sendJson(String l_type, String l_value, httpd_req_t *request)
 {
 
@@ -303,7 +303,8 @@ void sendJson(String l_type, String l_value, httpd_req_t *request)
   object["type"] = l_type;                  // write data into the JSON object -> I used "type" to identify if LED_selected or LED_intensity is sent and "value" for the actual value
   object["value"] = l_value;                // char *	itoa (int, char *, int);
   serializeJson(doc, jsonString);           // convert JSON object to string
-  log_i("jsonString= %s", jsonString);
+
+  log_i("jsonString= %s", jsonString.c_str());
   size_t json_length = jsonString.length();
 
   /*  Documentation
@@ -381,8 +382,7 @@ static httpd_handle_t start_webserver(void)
 /***          SETUP          ***/
 void setup()
 {
-  // static httpd_handle_t server = NULL; // might have to make this global
-  // server = NULL; // might have to make this global
+
   Serial.begin(115200); // init serial port for debugging
 
   // bool SPIFFSFS::begin(bool formatOnFail, const char * basePath, uint8_t maxOpenFiles, const char * partitionLabel)
@@ -395,8 +395,7 @@ void setup()
   WiFiEvent_t event;
   // WiFi.onEvent(WiFiGotIP, WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_GOT_IP); // WiFiGotIP is the handler
   WiFi.onEvent(wifi_event_handler, event = ARDUINO_EVENT_MAX); // all wifi events will trigger the callback
-  // vTaskDelay(pdMS_TO_TICKS(1000)); // delay 1 second
-  //  setup LED channels
+
   ledcSetup(led_channels[0], freq, resolution);
   ledcSetup(led_channels[1], freq, resolution);
   ledcSetup(led_channels[2], freq, resolution);
@@ -417,14 +416,9 @@ void setup()
   Serial.print("Connected to network with IP address: ");
   Serial.println(WiFi.localIP()); // show IP address that the ESP32 has received from router
 
-  /*
-  -- -server.on("/", []() {
-    server.send(200, "text/html", webpage); //    -> it needs to send out the HTML string "webpage" to the client
-  });
-  -- -ledcWrite(led_channels[LED_selected], map(LED_intensity, 0, 100, 0, 255));
-  */
+  // ledcWrite(led_channels[LED_selected], map(LED_intensity, 0, 100, 0, 255));
+
   server = start_webserver();
-  // hello joe for new features branch
 }
 
 void loop()
