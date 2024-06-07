@@ -37,7 +37,7 @@ int l_value;
 const char *ssid = "boulderhill";
 const char *password = "wideflower594";
 static httpd_handle_t server = NULL;
-
+int socketID;
 // global variables of the LED selected and the intensity of that LED
 int LED_selected = 0;
 int LED_intensity = 50;
@@ -267,7 +267,7 @@ static esp_err_t socket_handler(httpd_req_t *req)
       {
         LED_selected = int(l_value);
         sprintf((char *)buf, "{\"type\":\"LED_selected\",\"value\":\"%d\"}", LED_selected);
-        ws_pkt.len = strlen((const char *)buf);
+        ws_pkt.len = strlen((const char *)buf); // dont forget to update this every time buf gets a new string
 
         // send packet to client
         esp_err_t ret = httpd_ws_send_frame(req, &ws_pkt);
