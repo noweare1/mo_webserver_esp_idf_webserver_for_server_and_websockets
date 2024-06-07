@@ -26,9 +26,10 @@ static esp_err_t socket_handler(httpd_req_t *);
 static esp_err_t root_get_handler(httpd_req_t *);
 uint8_t *readFileUsingSize(fs::FS &fs, const char *path, size_t fsize);
 
-// arduino_event_id_t event;
-// typedef void (*WiFiEventCb)(arduino_event_id_t event);  //signature for wifi event handler
-// wifi_event_id_t onEvent(wifi_event_handler, ARDUINO_EVENT_MAX);
+// Documentation
+//  arduino_event_id_t event;
+//  typedef void (*WiFiEventCb)(arduino_event_id_t event);  //signature for wifi event handler
+//  wifi_event_id_t onEvent(wifi_event_handler, ARDUINO_EVENT_MAX);
 
 uint8_t *buf = NULL; // holds the index.html file
 const char *l_type;  // save & print key and value
@@ -37,7 +38,7 @@ int l_value;
 const char *ssid = "boulderhill";
 const char *password = "wideflower594";
 static httpd_handle_t server = NULL;
-int socketID;
+int socketID; // not used in this code
 // global variables of the LED selected and the intensity of that LED
 int LED_selected = 0;
 int LED_intensity = 50;
@@ -293,7 +294,7 @@ static esp_err_t socket_handler(httpd_req_t *req)
       } // if
 
     } // else
-    // free(buf); // make sure we do not return above without freeing buf
+
   } // if ws pkt len
 
   ret = ESP_OK;
