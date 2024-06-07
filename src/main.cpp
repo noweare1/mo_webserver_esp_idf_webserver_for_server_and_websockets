@@ -26,7 +26,6 @@ static esp_err_t socket_handler(httpd_req_t *);
 static esp_err_t root_get_handler(httpd_req_t *);
 uint8_t *readFileUsingSize(fs::FS &fs, const char *path, size_t fsize);
 
-
 // arduino_event_id_t event;
 // typedef void (*WiFiEventCb)(arduino_event_id_t event);  //signature for wifi event handler
 // wifi_event_id_t onEvent(wifi_event_handler, ARDUINO_EVENT_MAX);
@@ -249,7 +248,6 @@ static esp_err_t socket_handler(httpd_req_t *req)
     /**     Print out request payload data which is a json string    **/
     log_i("Got packet with message: %s", ws_pkt.payload);
 
-   
     StaticJsonDocument<200> doc;                                       // create JSON container
     DeserializationError error = deserializeJson(doc, ws_pkt.payload); // here we construct a json object so we can extract the data
     if (error)
@@ -301,7 +299,6 @@ static esp_err_t socket_handler(httpd_req_t *req)
   ret = ESP_OK;
   return ret;
 }
-
 
 /***  START WEBSERVER    ***/
 static httpd_handle_t start_webserver(void)
@@ -369,26 +366,3 @@ void setup()
 void loop()
 {
 }
-
-/*  //lets print out some request header information
-  size_t hdr_len = httpd_req_get_hdr_value_len(req, "Accept-Encoding");
-  httpd_req_get_hdr_value_str(req, "Accept-Encoding", value, hdr_len + 1);
-  log_i("hdr_len = %d  Accept-Encoding = %s", hdr_len, value);
-  strcpy(value, "");
-
-  hdr_len = httpd_req_get_hdr_value_len(req, "Connection");
-  httpd_req_get_hdr_value_str(req, "Connection", value, hdr_len + 1);
-  log_i("hdr_len = %d  Connection = %s", hdr_len, value);
-  strcpy(value, "");
-
-  hdr_len = httpd_req_get_hdr_value_len(req, "User-Agent");
-  httpd_req_get_hdr_value_str(req, "User-Agent", value, hdr_len + 1);
-  log_i("hdr_len = %d  User-Agent = %s", hdr_len, value);
-  strcpy(value, "");
-
-   // httpd_get_client_list(server, &fds, client_fds);
-  for (int i = 0; i < sizeof(fds); i++)
-    log_i("%d", client_fds[i]);
-
-
-*/
